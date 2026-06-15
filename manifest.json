@@ -1,0 +1,9 @@
+{
+  "name": "Mom's Eyes? Dad's Smile?",
+  "short_name": "Baby Guess",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff7f0",
+  "theme_color": "#ffd6e7",
+  "description": "A baby shower AI prediction game."
+}

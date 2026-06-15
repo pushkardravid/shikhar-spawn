@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "vercel": "^54.14.0"
+  }
+}
