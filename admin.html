@@ -23,6 +23,7 @@ h1{font-size:clamp(38px,6vw,72px);line-height:.9;letter-spacing:-2px;margin:0}
 input{width:100%;border:1px solid var(--line);border-radius:18px;padding:15px;font:inherit;margin:10px 0;background:white}
 button{border:0;border-radius:18px;background:#111;color:white;padding:13px 16px;font-weight:1000;font:inherit;cursor:pointer}
 button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.tabBtn{background:white;color:#241d28;border:1px solid var(--line)}.tabBtn.active{background:#111;color:white;border-color:#111}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .metric b{font-size:30px;display:block}
@@ -31,7 +32,9 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 .sectionHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
 .sectionHead h2{margin:0;font-size:28px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.galleryGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .tile{background:white;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.06)}
+.tileButton{display:block;width:100%;padding:0;background:none;border:0;color:inherit;text-align:left}
 .tile img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f8eef4}
 .tileBody{padding:12px}
 .tileBody b{display:block;font-size:16px}
@@ -51,6 +54,20 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 .modal.show{display:flex}
 .modalCard{width:min(900px,100%);background:white;border-radius:28px;padding:14px}
 .modalCard img{width:100%;max-height:78vh;object-fit:contain;border-radius:18px}
+.viewer{position:fixed;inset:0;background:linear-gradient(180deg,rgba(25,18,28,.92),rgba(25,18,28,.98));display:none;flex-direction:column;z-index:30;color:white}
+.viewer.show{display:flex}
+.viewerTop{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 10px;gap:10px}
+.viewerTop button{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.12)}
+.viewerMain{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;padding:10px 14px 18px}
+.viewerStage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+.viewerStage img{width:100%;height:100%;max-height:58vh;object-fit:contain;border-radius:22px;background:#160f17}
+.viewerSheet{background:white;color:var(--ink);border-radius:28px 28px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -20px 60px rgba(0,0,0,.25)}
+.viewerSheet h2{margin:0 0 8px;font-size:24px;line-height:1.05}
+.viewerMeta{display:grid;gap:8px;margin-top:10px}
+.viewerMetaRow{display:flex;justify-content:space-between;gap:12px;font-size:14px;line-height:1.35}
+.viewerMetaRow span:first-child{color:var(--muted);font-weight:850}
+.galleryNav{display:flex;gap:10px;margin-top:14px}
+.galleryNav button{flex:1}
 @media(max-width:800px){
   .metrics{grid-template-columns:1fr 1fr}
   .consensusWrap{grid-template-columns:1fr}
@@ -60,6 +77,27 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 <body>
 <div class="toast" id="toast"></div>
 <div class="modal" id="modal" onclick="modal.classList.remove('show')"><div class="modalCard"><img id="modalImg"></div></div>
+<div class="viewer" id="viewer">
+  <div class="viewerTop">
+    <button id="viewerClose">Close</button>
+    <div class="sub" id="viewerCount" style="color:rgba(255,255,255,.8);font-size:14px"></div>
+  </div>
+  <div class="viewerMain">
+    <div class="viewerStage"><img id="viewerImg" alt="Baby prediction"></div>
+  </div>
+  <div class="viewerSheet">
+    <h2 id="viewerTitle">Baby Prediction</h2>
+    <div class="viewerMeta">
+      <div class="viewerMetaRow"><span>Submitted by</span><span id="viewerGuest">Unknown</span></div>
+      <div class="viewerMetaRow"><span>Baby name</span><span id="viewerBabyName">Unknown</span></div>
+      <div class="viewerMetaRow"><span>Gender guess</span><span id="viewerGender">Unknown</span></div>
+    </div>
+    <div class="galleryNav">
+      <button id="viewerPrev" class="secondary">Previous</button>
+      <button id="viewerNext">Next</button>
+    </div>
+  </div>
+</div>
 
 <main class="page">
   <section id="login" class="card login">
@@ -75,46 +113,55 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
       <div class="sub">Gallery, consensus baby, and live stats from guest predictions.</div>
       <div class="actions">
         <button id="refreshBtn">Refresh</button>
-        <button id="csvBtn" class="secondary">Export CSV</button>
+      </div>
+      <div class="tabs">
+        <button id="dashboardTab" class="tabBtn active">Dashboard</button>
+        <button id="consensusTab" class="tabBtn">Consensus Baby</button>
+        <button id="galleryTab" class="tabBtn">Baby Gallery</button>
       </div>
     </div>
 
-    <section class="metrics">
-      <div class="card metric"><b id="totalCount">0</b><span>Predictions</span></div>
-      <div class="card metric"><b id="pinkCount">0</b><span>Team Pink</span></div>
-      <div class="card metric"><b id="blueCount">0</b><span>Team Blue</span></div>
-      <div class="card metric"><b id="imageCount">0</b><span>Images</span></div>
-    </section>
+    <div id="dashboardView">
+      <section class="metrics">
+        <div class="card metric"><b id="totalCount">0</b><span>Predictions</span></div>
+        <div class="card metric"><b id="pinkCount">0</b><span>Team Pink</span></div>
+        <div class="card metric"><b id="blueCount">0</b><span>Team Blue</span></div>
+        <div class="card metric"><b id="imageCount">0</b><span>Images</span></div>
+      </section>
 
-    <section class="section card">
-      <div class="sectionHead">
-        <div>
-          <h2>Community Consensus Baby</h2>
-          <div class="meta">Generates a new baby from up to 12 latest guest baby images.</div>
+      <section class="section">
+        <div class="sectionHead">
+          <h2>Prediction Stats</h2>
         </div>
-        <button id="consensusBtn">✨ Generate Consensus</button>
-      </div>
-      <div class="consensusWrap">
-        <img id="consensusImg" class="consensusImg" alt="Consensus baby">
-        <div>
-          <h3 id="consensusTitle">No consensus generated yet</h3>
-          <p class="meta" id="consensusMeta">Run this after a few guests have submitted predictions.</p>
+        <div id="stats" class="statsGrid"></div>
+      </section>
+    </div>
+
+    <section id="consensusView" class="section hidden">
+      <section class="section card">
+        <div class="sectionHead">
+          <div>
+            <h2>Community Consensus Baby</h2>
+            <div class="meta">Generates a new baby from up to 12 latest guest baby images.</div>
+          </div>
+          <button id="consensusBtn">✨ Generate Consensus</button>
         </div>
-      </div>
+        <div class="consensusWrap">
+          <img id="consensusImg" class="consensusImg" alt="Consensus baby">
+          <div>
+            <h3 id="consensusTitle">No consensus generated yet</h3>
+            <p class="meta" id="consensusMeta">Run this after a few guests have submitted predictions.</p>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <section class="section">
-      <div class="sectionHead">
-        <h2>Prediction Stats</h2>
-      </div>
-      <div id="stats" class="statsGrid"></div>
-    </section>
-
-    <section class="section">
+    <section id="galleryView" class="section hidden">
       <div class="sectionHead">
         <h2>Baby Gallery</h2>
+        <div class="meta">Generated baby images, submitter, and name suggestion.</div>
       </div>
-      <div id="gallery" class="grid"></div>
+      <div id="gallery" class="galleryGrid"></div>
     </section>
   </section>
 </main>
@@ -122,6 +169,7 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 <script>
 let adminPassword = sessionStorage.getItem("adminPassword") || "";
 let predictions = [];
+let galleryIndex = 0;
 
 function toastMsg(msg){
   toast.textContent = msg;
@@ -135,6 +183,9 @@ function labelValue(v){
 }
 function getGame(row, key){
   return row.game2_responses?.[key] || "Unknown";
+}
+function babyName(row){
+  return row.game2_responses?.babyNameSuggestion || row.game2_responses?.baby_name_suggestion || "Unknown";
 }
 async function loadData(){
   const res = await fetch("/api/admin-data", { headers: { "x-admin-password": adminPassword }});
@@ -158,19 +209,31 @@ function renderMetric(){
   blueCount.textContent = predictions.filter(p=>p.game2_responses?.theme === "blue").length;
 }
 function renderGallery(){
-  gallery.innerHTML = predictions.map(p => `
+  gallery.innerHTML = predictions.map((p, idx) => `
     <article class="tile">
-      ${p.image_url ? `<img src="${p.image_url}" onclick="openModal('${p.image_url.replace(/'/g, "%27")}')">` : `<div style="aspect-ratio:1;background:#fff0f7"></div>`}
-      <div class="tileBody">
-        <b>${escapeHtml(p.guest_name || "Unknown")}</b>
-        <div class="meta">
-          Baby calls me: ${escapeHtml(p.baby_calls_me || "?")}<br>
-          ${labelValue(p.gender_guess)} · ${p.mom_percent ?? "?"}% Mom<br>
-          ${new Date(p.created_at).toLocaleString()}
+      <button class="tileButton" type="button" onclick="openViewer(${idx})">
+        ${p.image_url ? `<img src="${p.image_url}" alt="${escapeHtml(p.guest_name || "Unknown")}">` : `<div style="aspect-ratio:1;background:#fff0f7"></div>`}
+        <div class="tileBody">
+          <b>${escapeHtml(p.guest_name || "Unknown")}</b>
+          <div class="meta">
+            ${escapeHtml(babyName(p))}<br>
+            ${escapeHtml(labelValue(p.gender_guess))}
+          </div>
         </div>
-      </div>
+      </button>
     </article>
   `).join("");
+}
+function setView(view){
+  const isDashboard = view === "dashboard";
+  const isConsensus = view === "consensus";
+  const isGallery = view === "gallery";
+  dashboardView.classList.toggle("hidden", !isDashboard);
+  consensusView.classList.toggle("hidden", !isConsensus);
+  galleryView.classList.toggle("hidden", !isGallery);
+  dashboardTab.classList.toggle("active", isDashboard);
+  consensusTab.classList.toggle("active", isConsensus);
+  galleryTab.classList.toggle("active", isGallery);
 }
 function statCard(title, counts){
   const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
@@ -192,7 +255,6 @@ function renderStats(){
     statCard("Musical Tendencies", countBy(predictions, p=>getGame(p,"tendencies"))),
     statCard("Musical Destiny", countBy(predictions, p=>getGame(p,"destiny"))),
     statCard("Member Of", countBy(predictions, p=>getGame(p,"member"))),
-    statCard("Entertainment", countBy(predictions, p=>getGame(p,"entertainment"))),
     statCard("Marathi", countBy(predictions, p=>getGame(p,"marathi"))),
     statCard("Vacation", countBy(predictions, p=>getGame(p,"vacation"))),
     statCard("School", countBy(predictions, p=>getGame(p,"school"))),
@@ -212,20 +274,43 @@ function openModal(url){
   modalImg.src = url;
   modal.classList.add("show");
 }
-function toCsv(){
-  const header = ["guest_name","baby_calls_me","gender_guess","eyes_guess","smile_guess","mom_percent","message","image_url","future","humor","tendencies","destiny","member","entertainment","marathi","vacation","school","theme","created_at"];
-  const rows = predictions.map(p => [
-    p.guest_name,p.baby_calls_me,p.gender_guess,p.eyes_guess,p.smile_guess,p.mom_percent,p.message,p.image_url,
-    getGame(p,"future"),getGame(p,"humor"),getGame(p,"tendencies"),getGame(p,"destiny"),getGame(p,"member"),getGame(p,"entertainment"),getGame(p,"marathi"),getGame(p,"vacation"),getGame(p,"school"),p.game2_responses?.theme,p.created_at
-  ]);
-  const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell ?? "").replace(/"/g,'""')}"`).join(",")).join("\n");
-  const blob = new Blob([csv], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "baby-predictions.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+function viewerData(index){
+  const p = predictions[index];
+  if(!p) return null;
+  return {
+    img: p.image_url || "",
+    guest: p.guest_name || "Unknown",
+    babyName: babyName(p),
+    gender: labelValue(p.gender_guess),
+    title: `Prediction ${index + 1} of ${predictions.length}`
+  };
+}
+function syncViewer(){
+  const data = viewerData(galleryIndex);
+  if(!data) return;
+  viewerImg.src = data.img || "";
+  viewerTitle.textContent = data.title;
+  viewerGuest.textContent = data.guest;
+  viewerBabyName.textContent = data.babyName;
+  viewerGender.textContent = data.gender;
+  viewerCount.textContent = `${galleryIndex + 1} / ${predictions.length}`;
+  viewerPrev.disabled = galleryIndex <= 0;
+  viewerNext.disabled = galleryIndex >= predictions.length - 1;
+}
+function openViewer(index){
+  if(!predictions.length) return;
+  galleryIndex = Math.max(0, Math.min(index, predictions.length - 1));
+  syncViewer();
+  viewer.classList.add("show");
+}
+function closeViewer(){
+  viewer.classList.remove("show");
+}
+function stepViewer(delta){
+  const next = galleryIndex + delta;
+  if(next < 0 || next >= predictions.length) return;
+  galleryIndex = next;
+  syncViewer();
 }
 async function generateConsensus(){
   consensusBtn.disabled = true;
@@ -261,8 +346,14 @@ loginBtn.onclick = async () => {
   }
 };
 refreshBtn.onclick = async () => { await loadData(); toastMsg("Refreshed"); };
-csvBtn.onclick = toCsv;
 consensusBtn.onclick = generateConsensus;
+dashboardTab.onclick = () => setView("dashboard");
+consensusTab.onclick = () => setView("consensus");
+galleryTab.onclick = () => setView("gallery");
+viewerClose.onclick = closeViewer;
+viewerPrev.onclick = () => stepViewer(-1);
+viewerNext.onclick = () => stepViewer(1);
+viewer.onclick = e => { if(e.target === viewer) closeViewer(); };
 
 if(adminPassword){
   loadData().then(()=>{
