@@ -1,5 +1,5 @@
-const CACHE_NAME = "shikhar-spawn-v14";
-const FILES = ["./","./index.html","./manifest.json","./service-worker.js","./assets/mom.jpg","./assets/dad.jpg"];
+const CACHE_NAME = "shikhar-spawn-v15";
+const FILES = ["./","./index.html","./manifest.json","./service-worker.js","./assets/mom.jpg","./assets/dad.jpg","./assets/founders.png","./assets/fallback-dad-childhood.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES)));
   self.skipWaiting();
