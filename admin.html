@@ -24,7 +24,7 @@ input{width:100%;border:1px solid var(--line);border-radius:18px;padding:15px;fo
 button{border:0;border-radius:18px;background:#111;color:white;padding:13px 16px;font-weight:1000;font:inherit;cursor:pointer}
 button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap}.tabBtn{background:white;color:#241d28;border:1px solid var(--line)}.tabBtn.active{background:#111;color:white;border-color:#111}
-.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions{display:flex;gap:10px;flex-wrap:wrap}.dangerButton{background:transparent;color:#e07b73;border:1px solid #6f3f3c}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .metric b{font-size:30px;display:block}
 .metric span{color:var(--muted);font-weight:850}
@@ -133,6 +133,7 @@ a{color:#d39b72}
       <div class="sub">Gallery, consensus baby, and live stats from guest predictions.</div>
       <div class="actions">
         <button id="refreshBtn">Refresh</button>
+        <button id="clearDbBtn" class="dangerButton">Clear predictions DB</button>
       </div>
   <div class="tabs">
         <button id="dashboardTab" class="tabBtn active">Dashboard</button>
@@ -410,6 +411,24 @@ loginBtn.onclick = async () => {
   }
 };
 refreshBtn.onclick = async () => { await loadData(); toastMsg("Refreshed"); };
+clearDbBtn.onclick = async () => {
+  const confirmed = window.confirm("Clear every prediction from the database? This removes table rows but keeps the table and stored image files.");
+  if(!confirmed) return;
+  clearDbBtn.disabled = true;
+  clearDbBtn.textContent = "Clearing...";
+  try{
+    const res = await fetch("/api/clear-predictions", { method:"DELETE", headers:{"x-admin-password":adminPassword} });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "Could not clear predictions");
+    await loadData();
+    toastMsg("Predictions database cleared");
+  }catch(e){
+    toastMsg(e.message || "Could not clear predictions");
+  }finally{
+    clearDbBtn.disabled = false;
+    clearDbBtn.textContent = "Clear predictions DB";
+  }
+};
 consensusBtn.onclick = generateConsensus;
 dashboardTab.onclick = () => setView("dashboard");
 resultsTab.onclick = () => setView("results");
