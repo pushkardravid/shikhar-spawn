@@ -3,7 +3,7 @@
   "short_name": "Baby Prediction",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f0ea",
-  "theme_color": "#f4f0ea",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "description": "A baby shower AI prediction game."
 }
