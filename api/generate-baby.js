@@ -213,7 +213,7 @@ async function generateImage(client, prompt) {
     } catch (error) {
       lastError = error;
       if (attempt === 1 || !isRetryable(error)) throw error;
-      const delay = 1500 + Math.floor(Math.random() * 1500);
+      const delay = 5000;
       console.warn(`Transient image generation failure; retrying in ${delay}ms.`);
       await wait(delay);
     }
