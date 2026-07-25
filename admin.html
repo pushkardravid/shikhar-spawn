@@ -33,6 +33,7 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 .sectionHead h2{margin:0;font-size:28px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .galleryGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.resultsToolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px}.resultsToolbar input{margin:0;flex:1}.resultsList{display:grid;gap:14px}.resultCard{background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.05)}.resultHead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}.resultHead h3{margin:0;font-size:20px}.resultHead .meta{text-align:right;margin:0}.resultGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}.resultField{min-width:0}.resultField b{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.resultField span{display:block;font-size:14px;line-height:1.35;overflow-wrap:anywhere}.resultMessage{grid-column:1/-1;padding-top:10px;border-top:1px solid var(--line)}
 .tile{background:white;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.06)}
 .tileButton{display:block;width:100%;padding:0;background:none;border:0;color:inherit;text-align:left}
 .tile img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f8eef4}
@@ -71,7 +72,26 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 @media(max-width:800px){
   .metrics{grid-template-columns:1fr 1fr}
   .consensusWrap{grid-template-columns:1fr}
+  .resultGrid{grid-template-columns:1fr 1fr}
 }
+@media(max-width:520px){
+  .resultHead{display:block}.resultHead .meta{text-align:left;margin-top:4px}.resultGrid{grid-template-columns:1fr}
+}
+/* Match the dark Shikhar Spawn product experience. */
+:root{--bg:#000;--bg2:#000;--ink:#f5f5f7;--muted:#a1a1a6;--accent:#a94f4b;--accent2:#d39b72;--line:#38383a;--card:#1c1c1e;--shadow:0 18px 50px rgba(0,0,0,.32)}
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;background:#000;color:var(--ink)}
+.page{padding-top:36px}.hero{margin:0 0 28px}.sub,.meta{color:var(--muted)}
+h1{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;font-weight:750;letter-spacing:-.065em;line-height:.94}
+.card,.tile,.resultCard{background:var(--card);border-color:var(--line);border-radius:14px;box-shadow:var(--shadow);backdrop-filter:none}
+.login{background:#000;border-color:var(--line);border-radius:16px}
+input{background:#1c1c1e;color:var(--ink);border-color:var(--line);border-radius:12px}input::placeholder{color:#77777c}input:focus{outline:none;border-color:#f5f5f7;box-shadow:0 0 0 3px rgba(245,245,247,.12)}
+button{background:#f5f5f7;color:#000;border-radius:10px;font-weight:700}button.secondary,.tabBtn{background:#1c1c1e;color:var(--ink);border-color:var(--line);border-radius:8px}.tabBtn.active{background:#f5f5f7;color:#000;border-color:#f5f5f7}
+.metric b{color:#f5f5f7}.metric span{color:var(--muted)}
+.sectionHead h2,.statCard h3{letter-spacing:-.04em}.bar{background:#38383a}.bar i{background:var(--accent)}
+.tile{overflow:hidden}.tile img{background:#1c1c1e}.tileBody{background:#1c1c1e}.resultHead{border-color:var(--line)}.resultField{color:var(--ink)}.resultField b{color:#77777c}.resultMessage{border-color:var(--line)}
+.viewer{background:rgba(0,0,0,.96)}.viewerSheet{background:#1c1c1e;color:var(--ink);border-radius:16px 16px 0 0}.viewerMetaRow span:first-child{color:var(--muted)}.viewerStage img{background:#000}
+.consensusImg{background:#1c1c1e;border-color:#1c1c1e;border-radius:14px}.toast{background:#f5f5f7;color:#000}
+a{color:#d39b72}
 </style>
 </head>
 <body>
@@ -114,8 +134,9 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
       <div class="actions">
         <button id="refreshBtn">Refresh</button>
       </div>
-      <div class="tabs">
+  <div class="tabs">
         <button id="dashboardTab" class="tabBtn active">Dashboard</button>
+        <button id="resultsTab" class="tabBtn">All Results</button>
         <button id="consensusTab" class="tabBtn">Consensus Baby</button>
         <button id="galleryTab" class="tabBtn">Baby Gallery</button>
       </div>
@@ -144,7 +165,7 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
             <h2>Community Consensus Baby</h2>
             <div class="meta">Generates a new baby from up to 12 latest guest baby images.</div>
           </div>
-          <button id="consensusBtn">✨ Generate Consensus</button>
+          <button id="consensusBtn">Generate Consensus</button>
         </div>
         <div class="consensusWrap">
           <img id="consensusImg" class="consensusImg" alt="Consensus baby">
@@ -162,6 +183,17 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
         <div class="meta">Generated baby images, submitter, and name suggestion.</div>
       </div>
       <div id="gallery" class="galleryGrid"></div>
+    </section>
+
+    <section id="resultsView" class="section hidden">
+      <div class="sectionHead">
+        <h2>All Results</h2>
+        <div class="meta">Every prediction currently stored in Supabase.</div>
+      </div>
+      <div class="resultsToolbar">
+        <input id="resultSearch" type="search" placeholder="Search guest, baby name, or answer">
+      </div>
+      <div id="results" class="resultsList"></div>
     </section>
   </section>
 </main>
@@ -224,14 +256,45 @@ function renderGallery(){
     </article>
   `).join("");
 }
+function formatResultKey(key){
+  return String(key).replace(/([a-z])([A-Z])/g,"$1 $2").replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+}
+function resultField(label,value,extra=""){
+  const display=value === null || value === undefined || value === "" ? "—" : String(value);
+  return `<div class="resultField ${extra}"><b>${escapeHtml(label)}</b><span>${escapeHtml(display)}</span></div>`;
+}
+function renderResults(){
+  const query=(resultSearch?.value||"").trim().toLowerCase();
+  const filtered=predictions.filter(p=>{
+    if(!query) return true;
+    return JSON.stringify(p).toLowerCase().includes(query);
+  });
+  if(!filtered.length){results.innerHTML=`<div class="card"><div class="sub">No matching results.</div></div>`;return}
+  results.innerHTML=filtered.map((p,index)=>{
+    const answers=p.game2_responses && typeof p.game2_responses === "object" ? p.game2_responses : {};
+    const fields=[
+      ["Baby calls me",p.baby_calls_me],
+      ["Gender guess",labelValue(p.gender_guess)],
+      ["Eyes",labelValue(p.eyes_guess)],
+      ["Smile",labelValue(p.smile_guess)],
+      ["Resemblance",p.mom_percent===null||p.mom_percent===undefined?"—":`${p.mom_percent}% Mom / ${100-p.mom_percent}% Dad`],
+      ["Image",p.image_url?"Uploaded":"No image"]
+    ];
+    const answerFields=Object.entries(answers).map(([key,value])=>[formatResultKey(key),Array.isArray(value)?value.join(", "):value]);
+    return `<article class="resultCard"><div class="resultHead"><h3>${escapeHtml(p.guest_name||"Unknown guest")}</h3><div class="meta">${escapeHtml(p.created_at||`Result ${index+1}`)}<br>${p.image_url?`<a href="${escapeHtml(p.image_url)}" target="_blank" rel="noreferrer">Open image</a>`:""}</div></div><div class="resultGrid">${resultField("Suggested baby name",babyName(p))}${fields.map(([label,value])=>resultField(label,value)).join("")}${resultField("Message to baby",p.message,"resultMessage")}${answerFields.map(([label,value])=>resultField(label,value)).join("")}</div></article>`;
+  }).join("");
+}
 function setView(view){
   const isDashboard = view === "dashboard";
+  const isResults = view === "results";
   const isConsensus = view === "consensus";
   const isGallery = view === "gallery";
   dashboardView.classList.toggle("hidden", !isDashboard);
+  resultsView.classList.toggle("hidden", !isResults);
   consensusView.classList.toggle("hidden", !isConsensus);
   galleryView.classList.toggle("hidden", !isGallery);
   dashboardTab.classList.toggle("active", isDashboard);
+  resultsTab.classList.toggle("active", isResults);
   consensusTab.classList.toggle("active", isConsensus);
   galleryTab.classList.toggle("active", isGallery);
 }
@@ -265,6 +328,7 @@ function renderStats(){
 function render(){
   renderMetric();
   renderGallery();
+  renderResults();
   renderStats();
 }
 function escapeHtml(s){
@@ -323,14 +387,14 @@ async function generateConsensus(){
     const data = await res.json();
     if(!res.ok) throw new Error(data.error || "Consensus failed");
     consensusImg.src = data.imageUrl || data.imageDataUrl;
-    consensusTitle.textContent = "Consensus Baby Generated ✨";
+    consensusTitle.textContent = "Consensus Baby Generated";
     consensusMeta.textContent = `Generated from ${data.predictionCount} prediction images.`;
     toastMsg("Consensus baby generated");
   }catch(e){
     toastMsg(e.message || "Consensus failed");
   }finally{
     consensusBtn.disabled = false;
-    consensusBtn.textContent = "✨ Generate Consensus";
+    consensusBtn.textContent = "Generate Consensus";
   }
 }
 
@@ -348,8 +412,10 @@ loginBtn.onclick = async () => {
 refreshBtn.onclick = async () => { await loadData(); toastMsg("Refreshed"); };
 consensusBtn.onclick = generateConsensus;
 dashboardTab.onclick = () => setView("dashboard");
+resultsTab.onclick = () => setView("results");
 consensusTab.onclick = () => setView("consensus");
 galleryTab.onclick = () => setView("gallery");
+resultSearch.oninput = renderResults;
 viewerClose.onclick = closeViewer;
 viewerPrev.onclick = () => stepViewer(-1);
 viewerNext.onclick = () => stepViewer(1);

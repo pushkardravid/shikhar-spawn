@@ -45,16 +45,13 @@ These are configured in Vercel for Development and Production.
 
 ## Guest Flow
 
-1. Choose Team Pink or Team Blue.
-2. Enter guest name.
-3. Enter what the baby will call the guest.
-4. Guess gender.
-5. Suggest a baby name.
-6. Pick visual traits: eyes, smile, nose, hair, expression, outfit, and overall resemblance.
-7. Add an optional visual description and message.
-8. Generate an AI baby portrait.
-9. Answer the second round of fun prediction questions.
-10. Save the full prediction to Supabase.
+1. Read the playful landing screen and start the prediction.
+2. Enter guest name, what baby will call the guest, a name suggestion, and a gender guess.
+3. Build baby’s look with predictions about eyes, smile, nose, cheeks, outfit, and resemblance.
+4. Predict baby’s personality, habits, internet presence, and arrival date through the family joke questions.
+5. Leave a personalized message for baby to discover later.
+6. Generate the AI baby portrait from the submitted prediction.
+7. Review and lock in the full prediction to Supabase.
 
 After gender and name are collected, later questions use the suggested baby name and gendered pronouns when available.
 

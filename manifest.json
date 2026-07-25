@@ -1,9 +1,9 @@
 {
-  "name": "Mom's Eyes? Dad's Smile?",
-  "short_name": "Baby Guess",
+  "name": "The Shikhar Spawn Prediction",
+  "short_name": "Baby Prediction",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#fff7f0",
-  "theme_color": "#ffd6e7",
+  "background_color": "#f4f0ea",
+  "theme_color": "#f4f0ea",
   "description": "A baby shower AI prediction game."
 }
