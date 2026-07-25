@@ -185,22 +185,49 @@ async function uploadGeneratedImage(b64) {
   return supabase.storage.from("baby-images").getPublicUrl(filePath).data.publicUrl;
 }
 
+function isRetryable(error) {
+  const status = Number(error?.status || error?.statusCode);
+  const code = error?.code || error?.cause?.code;
+  return [408, 409, 429, 500, 502, 503, 504].includes(status)
+    || error?.name === "APIConnectionError"
+    || ["ECONNRESET", "ETIMEDOUT", "ECONNREFUSED"].includes(code);
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function generateImage(client, prompt) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const momFile = await toFile(fs.createReadStream(path.join(process.cwd(), "assets", "mom.jpg")), "mother-reference.jpg", { type: "image/jpeg" });
+      const dadFile = await toFile(fs.createReadStream(path.join(process.cwd(), "assets", "dad.jpg")), "father-reference.jpg", { type: "image/jpeg" });
+      return await client.images.edit({
+        model: "gpt-image-1",
+        image: [momFile, dadFile],
+        prompt,
+        size: "1024x1024",
+        quality: "high"
+      });
+    } catch (error) {
+      lastError = error;
+      if (attempt === 1 || !isRetryable(error)) throw error;
+      const delay = 1500 + Math.floor(Math.random() * 1500);
+      console.warn(`Transient image generation failure; retrying in ${delay}ms.`);
+      await wait(delay);
+    }
+  }
+  throw lastError;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
   if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: "OPENAI_API_KEY is not configured." });
 
   try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const momFile = await toFile(fs.createReadStream(path.join(process.cwd(), "assets", "mom.jpg")), "mother-reference.jpg", { type: "image/jpeg" });
-    const dadFile = await toFile(fs.createReadStream(path.join(process.cwd(), "assets", "dad.jpg")), "father-reference.jpg", { type: "image/jpeg" });
-
-    const result = await client.images.edit({
-      model: "gpt-image-1",
-      image: [momFile, dadFile],
-      prompt: buildPrompt(req.body || {}),
-      size: "1024x1024",
-      quality: "high"
-    });
+    const result = await generateImage(client, buildPrompt(req.body || {}));
 
     const b64 = result.data?.[0]?.b64_json;
     if (!b64) return res.status(500).json({ error: "Image generation returned no image." });
