@@ -33,7 +33,7 @@ button.secondary{background:white;color:#241d28;border:1px solid var(--line)}
 .sectionHead h2{margin:0;font-size:28px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .galleryGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
-.resultsToolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px}.resultsToolbar input{margin:0;flex:1}.resultsList{display:grid;gap:14px}.resultCard{background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.05)}.resultHead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}.resultHead h3{margin:0;font-size:20px}.resultHead .meta{text-align:right;margin:0}.resultGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}.resultField{min-width:0}.resultField b{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.resultField span{display:block;font-size:14px;line-height:1.35;overflow-wrap:anywhere}.resultMessage{grid-column:1/-1;padding-top:10px;border-top:1px solid var(--line)}
+.resultsToolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px}.resultsToolbar input{margin:0;flex:1}.resultsList{display:grid;gap:14px}.resultCard{background:white;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.05)}.resultHead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}.resultHead h3{margin:0;font-size:20px}.resultHead .meta{text-align:right;margin:0}.resultGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}.resultField{min-width:0}.resultField b{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}.resultField span{display:block;font-size:14px;line-height:1.35;overflow-wrap:anywhere}.resultMessage{grid-column:1/-1;padding-top:10px;border-top:1px solid var(--line)}.resultGroupRows{display:grid;gap:10px}.resultGroupRow{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}.resultGroupRow strong{display:block}.resultGroupRow span{color:var(--muted);text-align:right}
 .tile{background:white;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.06)}
 .tileButton{display:block;width:100%;padding:0;background:none;border:0;color:inherit;text-align:left}
 .tile img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#f8eef4}
@@ -149,6 +149,7 @@ a{color:#d39b72}
         <div class="card metric"><b id="pinkCount">0</b><span>Team Pink</span></div>
         <div class="card metric"><b id="blueCount">0</b><span>Team Blue</span></div>
         <div class="card metric"><b id="imageCount">0</b><span>Images</span></div>
+        <div class="card metric"><b id="deviceCount">0</b><span>Unique devices</span></div>
       </section>
 
       <section class="section">
@@ -193,6 +194,7 @@ a{color:#d39b72}
       </div>
       <div class="resultsToolbar">
         <input id="resultSearch" type="search" placeholder="Search guest, baby name, or answer">
+        <button id="groupResultsBtn" class="secondary">Group by device</button>
       </div>
       <div id="results" class="resultsList"></div>
     </section>
@@ -203,6 +205,7 @@ a{color:#d39b72}
 let adminPassword = sessionStorage.getItem("adminPassword") || "";
 let predictions = [];
 let galleryIndex = 0;
+let groupResults = false;
 
 function toastMsg(msg){
   toast.textContent = msg;
@@ -219,6 +222,9 @@ function getGame(row, key){
 }
 function babyName(row){
   return row.game2_responses?.babyNameSuggestion || row.game2_responses?.baby_name_suggestion || "Unknown";
+}
+function deviceIdFor(row){
+  return row.game2_responses?.deviceId || row.game2_responses?.device_id || "unknown";
 }
 async function loadData(){
   const res = await fetch("/api/admin-data", { headers: { "x-admin-password": adminPassword }});
@@ -240,6 +246,7 @@ function renderMetric(){
   imageCount.textContent = predictions.filter(p=>p.image_url).length;
   pinkCount.textContent = predictions.filter(p=>p.game2_responses?.theme === "pink").length;
   blueCount.textContent = predictions.filter(p=>p.game2_responses?.theme === "blue").length;
+  deviceCount.textContent = new Set(predictions.map(deviceIdFor).filter(id=>id !== "unknown")).size;
 }
 function renderGallery(){
   gallery.innerHTML = predictions.map((p, idx) => `
@@ -271,6 +278,12 @@ function renderResults(){
     return JSON.stringify(p).toLowerCase().includes(query);
   });
   if(!filtered.length){results.innerHTML=`<div class="card"><div class="sub">No matching results.</div></div>`;return}
+  if(groupResults){
+    const groups={};
+    filtered.forEach(p=>{const id=deviceIdFor(p);(groups[id] ||= []).push(p)});
+    results.innerHTML=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length).map(([id,items])=>`<article class="resultCard"><div class="resultHead"><h3>${id==="unknown"?"Legacy / unknown device":"Repeat-submitter group"}</h3><div class="meta">${items.length} submission${items.length===1?"":"s"}<br><code>${escapeHtml(id)}</code></div></div><div class="resultGroupRows">${items.map(p=>`<div class="resultGroupRow"><strong>${escapeHtml(p.guest_name||"Unknown guest")}<br><span>${escapeHtml(babyName(p))}</span></strong><span>${escapeHtml(p.created_at||"No timestamp")}</span></div>`).join("")}</div></article>`).join("");
+    return;
+  }
   results.innerHTML=filtered.map((p,index)=>{
     const answers=p.game2_responses && typeof p.game2_responses === "object" ? p.game2_responses : {};
     const fields=[
@@ -432,6 +445,7 @@ clearDbBtn.onclick = async () => {
 consensusBtn.onclick = generateConsensus;
 dashboardTab.onclick = () => setView("dashboard");
 resultsTab.onclick = () => setView("results");
+groupResultsBtn.onclick = () => { groupResults = !groupResults; groupResultsBtn.textContent = groupResults ? "Show individual results" : "Group by device"; renderResults(); };
 consensusTab.onclick = () => setView("consensus");
 galleryTab.onclick = () => setView("gallery");
 resultSearch.oninput = renderResults;
